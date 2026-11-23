@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Генератор ссылок</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f1e6;--fg:#2a0c0d;--card:#fff;--line:#c9a24a;--acc:#6e1316;--accfg:#fff;--warn:#a31212}
+@media (prefers-color-scheme:dark){:root{--bg:#1d0607;--fg:#f2e8d0;--card:#2c0d0f;--acc:#c9a24a;--accfg:#1d0607;--warn:#ff9a8a}}
+body{margin:0;font:17px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--fg);padding:16px}
+main{max-width:480px;margin:0 auto}
+h1{font-size:22px;margin:4px 0 6px}
+.hint{font-size:14px;opacity:.75;margin:2px 0 0}
+label{display:block;margin:14px 0 4px;font-weight:600}
+input,select,textarea{width:100%;box-sizing:border-box;font:inherit;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;gap:10px;align-items:center;margin-top:14px;font-weight:400}
+.check input{width:auto}
+#warn{color:var(--warn);min-height:1.4em;margin:14px 0 6px;font-size:15px}
+#out{font-size:14px;word-break:break-all}
+.btns{display:grid;gap:10px;margin-top:10px}
+button{font:inherit;font-weight:600;padding:14px;border-radius:8px;border:2px solid var(--acc);background:var(--acc);color:var(--accfg);cursor:pointer}
+button.alt{background:transparent;color:var(--fg)}
+button:disabled{opacity:.4}
+</style>
+</head>
+<body>
+<main>
+  <h1>Ссылка на приглашение</h1>
+  <p class="hint">Заполни данные клиента, ссылка соберётся сама.</p>
+
+  <label for="type">Что за праздник</label>
+  <select id="type">
+    <option value="birthday">День рождения</option>
+    <option value="wedding">Свадьба (два имени)</option>
+    <option value="jubilee">Юбилей</option>
+    <option value="other">Другое (свой текст)</option>
+  </select>
+
+  <label for="lg">Язык приглашения при открытии</label>
+  <select id="lg">
+    <option value="tk">Туркменский (гость сможет переключить)</option>
+    <option value="ru">Русский (гость сможет переключить)</option>
+  </select>
+
+  <div id="lwrap" hidden>
+    <label for="l">Текст приглашения (на туркменском)</label>
+    <input id="l" placeholder="sizi ... çagyrýarys">
+    <label for="lr">Текст по-русски (можно пропустить)</label>
+    <input id="lr" placeholder="Приглашаем вас ...">
+  </div>
+
+  <label for="a">Имя</label>
+  <input id="a" placeholder="Rustam" autocomplete="off">
+
+  <div id="bwrap" hidden>
+    <label for="b">Второе имя</label>
+    <input id="b" placeholder="Aýna" autocomplete="off">
+  </div>
+
+  <div class="row">
+    <div><label for="date">Дата</label><input id="date" type="date"></div>
+    <div><label for="time">Время</label><input id="time" type="time"></div>
+  </div>
+
+  <label for="p">Место</label>
+  <input id="p" placeholder="AK Altyn, Türkmenabat" autocomplete="off">
+
+  <label for="t">Номер клиента (для ответов гостей)</label>
+  <input id="t" type="tel" placeholder="65209559">
+  <p class="hint">8 цифр или полностью с 993.</p>
+
+  <label class="check"><input id="w" type="checkbox"> У клиента есть WhatsApp (кнопка «приду» откроет WhatsApp, иначе звонок)</label>
+
+  <div id="warn"></div>
+
+  <label for="out">Готовая ссылка</label>
+  <textarea id="out" rows="5" readonly></textarea>
+  <div class="btns">
+    <button id="copy" disabled>Скопировать ссылку</button>
+    <button id="share" class="alt" disabled>Отправить</button>
+    <button id="open" class="alt" disabled>Открыть и проверить</button>
+    <button id="img" class="alt" disabled>Создать картинку (для IMO)</button>
+  </div>
+  <div id="imgwrap" hidden>
+    <canvas id="cv" width="1080" height="1920" style="width:100%;height:auto;margin-top:16px;border:1px solid var(--line);border-radius:8px"></canvas>
+    <div class="btns">
+      <button id="sendimg">Отправить картинку</button>
+      <button id="save" class="alt">Сохранить в телефон</button>
+    </div>
+  </div>
+</main>
+
+<script>
+function $(id){return document.getElementById(id)}
+var cur = null;
+var PT = {
+  tk: {intro:'Hormatly myhmanlarymyz!', d:'Sene', t:'Wagty', p:'Ýeri', r:'Barjakdygyňyzy habar ediň',
+    ev:{birthday:'sizi doglan gün baýramyna çagyrýarys', wedding:'sizi toýumyza çagyrýarys', jubilee:'sizi ýubileýimize çagyrýarys'},
+    m:['ýanwar','fewral','mart','aprel','maý','iýun','iýul','awgust','sentýabr','oktýabr','noýabr','dekabr']},
+  ru: {intro:'Уважаемые гости!', d:'Дата', t:'Время', p:'Место', r:'Подтвердите участие',
+    ev:{birthday:'Приглашаем вас на день рождения', wedding:'Приглашаем вас на нашу свадьбу', jubilee:'Приглашаем вас на юбилей'},
+    m:['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря']}
+};
+function wrapText(x,text,maxW){
+  var words=text.split(' '), lines=[], line='';
+  words.forEach(function(w){
+    var t = line ? line+' '+w : w;
+    if (x.measureText(t).width > maxW && line) { lines.push(line); line = w; } else { line = t; }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+function fitPx(x,text,tpl,px,maxW){
+  while (px > 30) { x.font = tpl.replace('{s}',px); if (x.measureText(text).width <= maxW) break; px -= 4; }
+  return px;
+}
+function draw(c0){
+  var P = PT[c0.lg] || PT.tk, cv = $('cv'), W = 1080, H = 1920;
+  cv.width = W; cv.height = H;
+  var x = cv.getContext('2d');
+  var GOLD = '#c9a24a', PERG = '#f2e8d0';
+  x.fillStyle = '#3a0a0c'; x.fillRect(0,0,W,H);
+  x.fillStyle = 'rgba(201,162,74,0.07)';
+  for (var yy=0; yy<H; yy+=60) { for (var xx=((yy/60)%2)*60; xx<W; xx+=120) { x.fillRect(xx,yy,60,60); } }
+  x.fillStyle = '#6e1316'; x.fillRect(60,60,W-120,H-120);
+  x.strokeStyle = GOLD; x.lineWidth = 6; x.strokeRect(60,60,W-120,H-120);
+  x.lineWidth = 2; x.strokeRect(36,36,W-72,H-72);
+  function oct(cy,s,fill){
+    var cx = W/2, k = s*0.3, h = s/2;
+    x.beginPath();
+    x.moveTo(cx-h+k,cy-h); x.lineTo(cx+h-k,cy-h); x.lineTo(cx+h,cy-h+k); x.lineTo(cx+h,cy+h-k);
+    x.lineTo(cx+h-k,cy+h); x.lineTo(cx-h+k,cy+h); x.lineTo(cx-h,cy+h-k); x.lineTo(cx-h,cy-h+k);
+    x.closePath(); x.fillStyle = fill; x.fill();
+  }
+  oct(640,580,GOLD); oct(640,562,'#1d0607');
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillStyle = PERG; x.font = '40px sans-serif'; x.fillText(P.intro, W/2, 255);
+  var big = 'bold {s}px Georgia, "Noto Serif", serif';
+  if (c0.b) {
+    var s = Math.min(fitPx(x,c0.a,big,100,440), fitPx(x,c0.b,big,100,440));
+    x.font = big.replace('{s}',s); x.fillStyle = PERG;
+    x.fillText(c0.a, W/2, 560); x.fillText(c0.b, W/2, 720);
+    x.fillStyle = GOLD; x.font = 'italic 70px Georgia, serif'; x.fillText('&', W/2, 640);
+  } else {
+    var s3 = fitPx(x,c0.a,big,120,440);
+    x.font = big.replace('{s}',s3); x.fillStyle = PERG; x.fillText(c0.a, W/2, 640);
+  }
+  var lead = c0.type==='other' ? (c0.lg==='ru' ? (c0.lr || c0.l) : c0.l) : P.ev[c0.type];
+  x.fillStyle = PERG; x.font = 'italic 52px Georgia, serif';
+  wrapText(x, lead || '', 860).forEach(function(t,i){ x.fillText(t, W/2, 1010+i*64); });
+  var dp = c0.date.split('-');
+  var dtxt = parseInt(dp[2],10)+' '+P.m[parseInt(dp[1],10)-1]+' '+dp[0]+(c0.lg==='ru' ? ' г.' : '');
+  function line(y){ x.strokeStyle = 'rgba(201,162,74,0.6)'; x.lineWidth = 2; x.beginPath(); x.moveTo(180,y); x.lineTo(W-180,y); x.stroke(); }
+  function row(y,label,val,fs){
+    line(y);
+    x.fillStyle = 'rgba(242,232,208,0.75)'; x.font = '32px sans-serif'; x.fillText(label, W/2, y+42);
+    x.fillStyle = PERG; x.font = 'bold '+fs+'px Georgia, serif';
+    wrapText(x, val, 840).forEach(function(t,i){ x.fillText(t, W/2, y+100+i*(fs+8)); });
+  }
+  row(1130,P.d,dtxt,54); row(1280,P.t,c0.time,54); row(1430,P.p,c0.p,46);
+  line(1690);
+  x.fillStyle = 'rgba(242,232,208,0.75)'; x.font = '32px sans-serif'; x.fillText(P.r, W/2, 1732);
+  x.fillStyle = GOLD; x.font = 'bold 64px Georgia, serif';
+  x.fillText('+993 '+c0.t.slice(3,5)+' '+c0.t.slice(5), W/2, 1802);
+}
+function dl(){
+  $('cv').toBlob(function(b){
+    var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'priglashenie.png';
+    document.body.appendChild(a); a.click(); a.remove();
+  }, 'image/png');
+}
+function phone(v){var d=v.replace(/\D/g,''); if(d.length===8) d='993'+d; return d}
+
+function build(){
+  var type=$('type').value;
+  $('lwrap').hidden = type!=='other';
+  $('bwrap').hidden = !(type==='wedding' || type==='other');
+  var a=$('a').value.trim();
+  var b=$('bwrap').hidden ? '' : $('b').value.trim();
+  var date=$('date').value, time=$('time').value;
+  var p=$('p').value.trim(), t=phone($('t').value);
+  var l = type==='other' ? $('l').value.trim() : '';
+  var lr = type==='other' ? $('lr').value.trim() : '';
+  var lg = $('lg').value;
+  var w=[];
+  if(!a) w.push('Впиши имя');
+  if(!date) w.push('Выбери дату');
+  if(!time) w.push('Укажи время');
+  if(!p) w.push('Впиши место');
+  if(!/^993\d{8}$/.test(t)) w.push('Номер: 8 цифр, например 65209559');
+  if(type==='other' && !l) w.push('Впиши текст приглашения');
+  $('warn').textContent = w.join('. ');
+  var ok = w.length===0;
+  ['copy','share','open','img'].forEach(function(id){ $(id).disabled = !ok; });
+  if(!ok){ $('out').value=''; cur=null; return; }
+  var sp = new URLSearchParams();
+  sp.set('a',a); sp.set('b',b);
+  if(type==='other'){ sp.set('l',l); if(lr) sp.set('lr',lr); } else { sp.set('e',type); }
+  if(lg==='ru') sp.set('lg','ru');
+  sp.set('d',date+'T'+time); sp.set('p',p); sp.set('t',t);
+  if($('w').checked) sp.set('w','1');
+  var u = new URL('index.html', location.href);
+  u.search = sp.toString();
+  $('out').value = u.href;
+  cur = {a:a,b:b,date:date,time:time,p:p,t:t,type:type,l:l,lr:lr,lg:lg};
+}
+
+['type','lg','l','lr','a','b','date','time','p','t','w'].forEach(function(id){
+  $(id).addEventListener('input', build);
+  $(id).addEventListener('change', build);
+});
+
+$('copy').addEventListener('click', function(){
+  var v=$('out').value;
+  if(navigator.clipboard){ navigator.clipboard.writeText(v).then(function(){ $('copy').textContent='Скопировано'; setTimeout(function(){ $('copy').textContent='Скопировать ссылку'; },2000); }); }
+  else { $('out').select(); document.execCommand('copy'); }
+});
+$('share').addEventListener('click', function(){
+  var v=$('out').value;
+  if(navigator.share){ navigator.share({url:v}).catch(function(){}); }
+  else { $('out').select(); document.execCommand('copy'); }
+});
+$('open').addEventListener('click', function(){ window.open($('out').value,'_blank'); });
+$('img').addEventListener('click', function(){
+  if (!cur) return;
+  draw(cur); $('imgwrap').hidden = false; $('imgwrap').scrollIntoView({behavior:'smooth'});
+});
+$('save').addEventListener('click', dl);
+$('sendimg').addEventListener('click', function(){
+  $('cv').toBlob(function(b){
+    var f = new File([b], 'priglashenie.png', {type:'image/png'});
+    if (navigator.canShare && navigator.canShare({files:[f]})) { navigator.share({files:[f]}).catch(function(){}); }
+    else { dl(); }
+  }, 'image/png');
+});
+build();
+</script>
+</body>
+</html>
