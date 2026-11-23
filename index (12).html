@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Çagyryş</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gyzyl:#6e1316; --gyzyl-dark:#3a0a0c; --pergament:#f2e8d0;
+  --altyn:#c9a24a; --gara:#1d0607;
+  --serif:"Cormorant Garamond",Georgia,serif;
+  --sans:"Nunito",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);color:var(--pergament);background:var(--gyzyl-dark);
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  background-image:
+    linear-gradient(45deg,rgba(201,162,74,.07) 25%,transparent 25%,transparent 75%,rgba(201,162,74,.07) 75%),
+    linear-gradient(45deg,rgba(201,162,74,.07) 25%,transparent 25%,transparent 75%,rgba(201,162,74,.07) 75%);
+  background-size:36px 36px;background-position:0 0,18px 18px;
+}
+.wrap{max-width:460px;margin:0 auto;padding:28px 18px 40px}
+.frame{
+  border:2px solid var(--altyn);outline:1px solid var(--altyn);outline-offset:5px;
+  background:var(--gyzyl);padding:34px 20px 30px;text-align:center;
+}
+.intro{font-size:15px;letter-spacing:.02em;opacity:.9}
+.gul{
+  width:min(300px,82vw);aspect-ratio:1;margin:24px auto;
+  background:var(--altyn);
+  clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  display:grid;place-items:center;
+}
+.gul-in{
+  width:calc(100% - 10px);height:calc(100% - 10px);background:var(--gara);
+  clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 14%;
+}
+.name{font-family:var(--serif);font-weight:700;font-size:clamp(30px,10vw,42px);line-height:1.05;color:var(--pergament)}
+.amp{font-family:var(--serif);font-style:italic;font-size:26px;color:var(--altyn)}
+.lead{font-family:var(--serif);font-style:italic;font-size:21px;margin-bottom:6px}
+.info{margin:26px 0 8px;display:grid;gap:14px}
+.info div{border-top:1px solid rgba(201,162,74,.5);padding-top:12px}
+.info small{display:block;font-size:13px;opacity:.75;margin-bottom:2px}
+.info b{font-family:var(--serif);font-size:22px;font-weight:700}
+.count{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:28px 0 6px}
+.count div{background:var(--gara);border:1px solid var(--altyn);padding:10px 0}
+.count b{display:block;font-family:var(--serif);font-size:30px;color:var(--altyn)}
+.count span{font-size:12px;opacity:.8}
+.btns{display:grid;gap:10px;margin-top:26px}
+.btn{
+  display:block;padding:15px;border:2px solid var(--altyn);color:var(--pergament);
+  text-decoration:none;font-weight:600;font-size:16px;background:transparent;cursor:pointer;font-family:inherit;
+}
+.btn.main{background:var(--altyn);color:var(--gara)}
+.btn:focus-visible{outline:3px solid var(--pergament);outline-offset:3px}
+.demo{margin-top:22px;font-size:12px;text-align:center;opacity:.55}
+.done{font-family:var(--serif);font-size:24px;color:var(--altyn)}
+[hidden]{display:none!important}
+.order{margin-top:22px;border:1px solid var(--altyn);background:var(--gara);padding:22px 18px;text-align:center}
+.order h2{font-family:var(--serif);font-size:24px;margin-bottom:8px}
+.order p{font-size:15px;line-height:1.5}
+.order .price{font-family:var(--serif);font-size:32px;font-weight:700;color:var(--altyn);margin:10px 0 16px}
+.order .btns{margin-top:0}
+@media (prefers-reduced-motion:no-preference){
+  .gul{animation:in .9s ease-out both}
+  @keyframes in{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="frame">
+    <p class="intro" id="intro">Hormatly myhmanlarymyz!</p>
+    <div class="gul"><div class="gul-in">
+      <span class="name" id="a">Aýdogdy</span>
+      <span class="amp" id="amp">&amp;</span>
+      <span class="name" id="b">Merjen</span>
+    </div></div>
+    <p class="lead" id="lead">sizi toýumyza çagyrýarys</p>
+
+    <div class="info">
+      <div><small>Sene</small><b id="dateTxt"></b></div>
+      <div><small>Wagty</small><b id="timeTxt"></b></div>
+      <div><small>Ýeri</small><b id="place"></b></div>
+    </div>
+
+    <div class="count" id="count" aria-live="off">
+      <div><b id="cd">0</b><span>gün</span></div>
+      <div><b id="ch">0</b><span>sagat</span></div>
+      <div><b id="cm">0</b><span>minut</span></div>
+      <div><b id="cs">0</b><span>sekunt</span></div>
+    </div>
+
+    <div class="btns">
+      <a class="btn main" id="rsvp" href="#">Barjakdygymy habar bermek</a>
+      <button class="btn" id="copy" type="button">IMO üçin belgini göçürmek</button>
+      <a class="btn" id="map" href="#" target="_blank" rel="noopener">Kartada görkezmek</a>
+      <button class="btn" id="share" type="button">Çagyryşy paýlaşmak</button>
+    </div>
+  </section>
+  <section class="order" id="order" hidden>
+    <h2>Şeýle çagyryş isleýärsiňizmi?</h2>
+    <p>Toý, ýubileý, doglan gün we başga çäreler üçin. Atlaryňyzy, senäni we ýeri ýazyň, men size ýörite ssylka taýýarlaýaryn.</p>
+    <div class="price">100 TMT</div>
+    <div class="btns">
+      <a class="btn main" href="tel:+99363778188">Jaň etmek: +993 63 778188</a>
+      <a class="btn" href="https://wa.me/99363778188" target="_blank" rel="noopener">WhatsApp-da ýazmak</a>
+      <p style="font-size:14px;opacity:.85;margin-top:4px">IMO-da hem ýazyp bilersiňiz: +993 63 778188</p>
+    </div>
+  </section>
+</main>
+
+<script>
+/* Sazlamalar. Ssylkada hem üýtgedip bolýar:
+   a=Ad1  b=Ad2 (boş goýsaňyz bir ad)  d=2027-03-20T18:00  p=Ýer  t=telefon  l=esasy söz  i=salamlaşyk
+   w=1 (jaň ýerine WhatsApp)  boşluk ýerine + ýazyň */
+var q = new URLSearchParams(location.search);
+var cfg = {
+  a: q.get('a') || 'Aýdogdy',
+  b: q.has('b') ? q.get('b') : 'Merjen',
+  d: q.get('d') || '2027-03-20T18:00',
+  p: q.get('p') || '«Ak öý» toý merkezi, Türkmenabat',
+  t: (q.get('t') || '99363778188').replace(/\D/g,''),
+  l: q.get('l') || 'sizi toýumyza çagyrýarys',
+  i: q.get('i') || 'Hormatly myhmanlarymyz!'
+};
+var months = ['ýanwar','fewral','mart','aprel','maý','iýun','iýul','awgust','sentýabr','oktýabr','noýabr','dekabr'];
+var target = new Date(cfg.d);
+function $(id){return document.getElementById(id)}
+
+$('a').textContent = cfg.a;
+$('b').textContent = cfg.b;
+$('intro').textContent = cfg.i;
+$('lead').textContent = cfg.l;
+if (!cfg.b) { $('amp').hidden = true; $('b').hidden = true; }
+if (!q.has('a')) { $('order').hidden = false; }
+$('place').textContent = cfg.p;
+if (!isNaN(target)) {
+  $('dateTxt').textContent = target.getDate() + ' ' + months[target.getMonth()] + ' ' + target.getFullYear();
+  $('timeTxt').textContent = String(target.getHours()).padStart(2,'0') + ':' + String(target.getMinutes()).padStart(2,'0');
+}
+document.title = cfg.a + (cfg.b ? ' & ' + cfg.b : '') + ' – çagyryş';
+$('map').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(cfg.p);
+if (q.has('w')) {
+  $('rsvp').href = 'https://wa.me/' + cfg.t + '?text=' + encodeURIComponent('Salam! ' + cfg.a + (cfg.b ? ' & ' + cfg.b : '') + ' çagyryşyna barýaryn.');
+  $('copy').hidden = true;
+} else {
+  $('rsvp').href = 'tel:+' + cfg.t;
+  $('rsvp').textContent = 'Jaň edip habar bermek';
+}
+$('copy').addEventListener('click', function(){
+  var num = '+' + cfg.t;
+  if (navigator.clipboard) { navigator.clipboard.writeText(num).then(function(){ $('copy').textContent = 'Göçürildi: ' + num; }); }
+  else { prompt('Belgini göçüriň:', num); }
+});
+
+function tick(){
+  var left = target - new Date();
+  if (isNaN(left)) return;
+  if (left <= 0) { $('count').innerHTML = '<p class="done" style="grid-column:1/-1">Çäre başlandy!</p>'; clearInterval(timer); return; }
+  var s = Math.floor(left/1000);
+  $('cd').textContent = Math.floor(s/86400);
+  $('ch').textContent = Math.floor(s%86400/3600);
+  $('cm').textContent = Math.floor(s%3600/60);
+  $('cs').textContent = s%60;
+}
+var timer = setInterval(tick, 1000); tick();
+
+$('share').addEventListener('click', function(){
+  var data = {title: document.title, url: location.href};
+  if (navigator.share) { navigator.share(data).catch(function(){}); }
+  else if (navigator.clipboard) { navigator.clipboard.writeText(location.href).then(function(){ $('share').textContent = 'Ssylka göçürildi'; }); }
+});
+</script>
+</body>
+</html>
