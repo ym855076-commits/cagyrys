@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Генератор ссылок</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f1e6;--fg:#2a0c0d;--card:#fff;--line:#c9a24a;--acc:#6e1316;--accfg:#fff;--warn:#a31212}
+@media (prefers-color-scheme:dark){:root{--bg:#1d0607;--fg:#f2e8d0;--card:#2c0d0f;--acc:#c9a24a;--accfg:#1d0607;--warn:#ff9a8a}}
+body{margin:0;font:17px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--fg);padding:16px}
+main{max-width:480px;margin:0 auto}
+h1{font-size:22px;margin:4px 0 6px}
+.hint{font-size:14px;opacity:.75;margin:2px 0 0}
+label{display:block;margin:14px 0 4px;font-weight:600}
+input,select,textarea{width:100%;box-sizing:border-box;font:inherit;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;gap:10px;align-items:center;margin-top:14px;font-weight:400}
+.check input{width:auto}
+#warn{color:var(--warn);min-height:1.4em;margin:14px 0 6px;font-size:15px}
+#out{font-size:14px;word-break:break-all}
+.btns{display:grid;gap:10px;margin-top:10px}
+button{font:inherit;font-weight:600;padding:14px;border-radius:8px;border:2px solid var(--acc);background:var(--acc);color:var(--accfg);cursor:pointer}
+button.alt{background:transparent;color:var(--fg)}
+button:disabled{opacity:.4}
+</style>
+</head>
+<body>
+<main>
+  <h1>Ссылка на приглашение</h1>
+  <p class="hint">Заполни данные клиента, ссылка соберётся сама.</p>
+
+  <label for="type">Что за праздник</label>
+  <select id="type">
+    <option value="birthday">День рождения</option>
+    <option value="wedding">Свадьба (два имени)</option>
+    <option value="jubilee">Юбилей</option>
+    <option value="other">Другое (свой текст)</option>
+  </select>
+
+  <label for="lg">Язык приглашения при открытии</label>
+  <select id="lg">
+    <option value="tk">Туркменский (гость сможет переключить)</option>
+    <option value="ru">Русский (гость сможет переключить)</option>
+  </select>
+
+  <div id="lwrap" hidden>
+    <label for="l">Текст приглашения (на туркменском)</label>
+    <input id="l" placeholder="sizi ... çagyrýarys">
+    <label for="lr">Текст по-русски (можно пропустить)</label>
+    <input id="lr" placeholder="Приглашаем вас ...">
+  </div>
+
+  <label for="a">Имя</label>
+  <input id="a" placeholder="Rustam" autocomplete="off">
+
+  <div id="bwrap" hidden>
+    <label for="b">Второе имя</label>
+    <input id="b" placeholder="Aýna" autocomplete="off">
+  </div>
+
+  <div class="row">
+    <div><label for="date">Дата</label><input id="date" type="date"></div>
+    <div><label for="time">Время</label><input id="time" type="time"></div>
+  </div>
+
+  <label for="p">Место</label>
+  <input id="p" placeholder="AK Altyn, Türkmenabat" autocomplete="off">
+
+  <label for="t">Номер клиента (для ответов гостей)</label>
+  <input id="t" type="tel" placeholder="65209559">
+  <p class="hint">8 цифр или полностью с 993.</p>
+
+  <label class="check"><input id="w" type="checkbox"> У клиента есть WhatsApp (кнопка «приду» откроет WhatsApp, иначе звонок)</label>
+
+  <div id="warn"></div>
+
+  <label for="out">Готовая ссылка</label>
+  <textarea id="out" rows="5" readonly></textarea>
+  <div class="btns">
+    <button id="copy" disabled>Скопировать ссылку</button>
+    <button id="share" class="alt" disabled>Отправить</button>
+    <button id="open" class="alt" disabled>Открыть и проверить</button>
+  </div>
+</main>
+
+<script>
+function $(id){return document.getElementById(id)}
+function phone(v){var d=v.replace(/\D/g,''); if(d.length===8) d='993'+d; return d}
+
+function build(){
+  var type=$('type').value;
+  $('lwrap').hidden = type!=='other';
+  $('bwrap').hidden = !(type==='wedding' || type==='other');
+  var a=$('a').value.trim();
+  var b=$('bwrap').hidden ? '' : $('b').value.trim();
+  var date=$('date').value, time=$('time').value;
+  var p=$('p').value.trim(), t=phone($('t').value);
+  var l = type==='other' ? $('l').value.trim() : '';
+  var lr = type==='other' ? $('lr').value.trim() : '';
+  var lg = $('lg').value;
+  var w=[];
+  if(!a) w.push('Впиши имя');
+  if(!date) w.push('Выбери дату');
+  if(!time) w.push('Укажи время');
+  if(!p) w.push('Впиши место');
+  if(!/^993\d{8}$/.test(t)) w.push('Номер: 8 цифр, например 65209559');
+  if(type==='other' && !l) w.push('Впиши текст приглашения');
+  $('warn').textContent = w.join('. ');
+  var ok = w.length===0;
+  ['copy','share','open'].forEach(function(id){ $(id).disabled = !ok; });
+  if(!ok){ $('out').value=''; return; }
+  var sp = new URLSearchParams();
+  sp.set('a',a); sp.set('b',b);
+  if(type==='other'){ sp.set('l',l); if(lr) sp.set('lr',lr); } else { sp.set('e',type); }
+  if(lg==='ru') sp.set('lg','ru');
+  sp.set('d',date+'T'+time); sp.set('p',p); sp.set('t',t);
+  if($('w').checked) sp.set('w','1');
+  var u = new URL('index.html', location.href);
+  u.search = sp.toString();
+  $('out').value = u.href;
+}
+
+['type','lg','l','lr','a','b','date','time','p','t','w'].forEach(function(id){
+  $(id).addEventListener('input', build);
+  $(id).addEventListener('change', build);
+});
+
+$('copy').addEventListener('click', function(){
+  var v=$('out').value;
+  if(navigator.clipboard){ navigator.clipboard.writeText(v).then(function(){ $('copy').textContent='Скопировано'; setTimeout(function(){ $('copy').textContent='Скопировать ссылку'; },2000); }); }
+  else { $('out').select(); document.execCommand('copy'); }
+});
+$('share').addEventListener('click', function(){
+  var v=$('out').value;
+  if(navigator.share){ navigator.share({url:v}).catch(function(){}); }
+  else { $('out').select(); document.execCommand('copy'); }
+});
+$('open').addEventListener('click', function(){ window.open($('out').value,'_blank'); });
+build();
+</script>
+</body>
+</html>
